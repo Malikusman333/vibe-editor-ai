@@ -53,6 +53,7 @@ import {
   Eye,
 } from "lucide-react";
 import { toast } from "sonner";
+import { MarkedToggleButton } from "./marked-toggle";
 
 interface ProjectTableProps {
   projects: Project[];
@@ -88,15 +89,32 @@ export default function ProjectTable({
   const [favoutrie, setFavourite] = useState(false);
 
   const handleEditClick = (project: Project) => {
-    //    Write your logic here
+setSelectedProject(project);
+setEditData({
+  title:project.title,
+  description:project.description || ""
+})
+setEditDialogOpen(true)
   };
 
   const handleDeleteClick = async (project: Project) => {
-    //    Write your logic here
+    setSelectedProject(project)
+    setDeleteDialogOpen(true);
   };
 
   const handleUpdateProject = async () => {
-    //    Write your logic here
+    if(!selectedProject || !onUpdateProject) return;
+    setIsLoading(true);
+    try {
+      await onUpdateProject(selectedProject.id, editData);
+      setEditDialogOpen(false);
+      toast.success("Project updated successfully");
+    } catch (error) {
+      toast.error("Failed to update project");
+      console.error("Error updating project:", error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleMarkasFavorite = async (project: Project) => {
@@ -104,15 +122,41 @@ export default function ProjectTable({
   };
 
   const handleDeleteProject = async () => {
-    //    Write your logic here
+       if (!selectedProject || !onDeleteProject) return;
+
+       setIsLoading(true);
+       try {
+         await onDeleteProject(selectedProject.id);
+         setDeleteDialogOpen(false);
+         setSelectedProject(null);
+         toast.success("Project deleted successfully");
+       } catch (error) {
+         toast.error("Failed to delete project");
+         console.error("Error deleting project:", error);
+       } finally {
+         setIsLoading(false);
+       }
   };
 
   const handleDuplicateProject = async (project: Project) => {
-    //    Write your logic here
+       if (!onDuplicateProject) return;
+
+       setIsLoading(true);
+       try {
+         await onDuplicateProject(project.id);
+         toast.success("Project duplicated successfully");
+       } catch (error) {
+         toast.error("Failed to duplicate project");
+         console.error("Error duplicating project:", error);
+       } finally {
+         setIsLoading(false);
+       }
   };
 
   const copyProjectUrl = (projectId: string) => {
-    //    Write your logic here
+    const url = `${window.location.origin}/playground/${projectId}`;
+    navigator.clipboard.writeText(url);
+    toast.success("Project url copied to clipboard");
   };
 
   return (
@@ -153,7 +197,9 @@ export default function ProjectTable({
                   </Badge>
                 </TableCell>
                 <TableCell>
-                  {format(new Date(project.createdAt), "MMM d, yyyy")}
+                  <span className="text-sm text-gray-500">
+                    {format(new Date(project.createdAt), "MMM d, yyyy")}
+                  </span>
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
@@ -171,38 +217,48 @@ export default function ProjectTable({
                 </TableCell>
                 <TableCell>
                   <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <MoreHorizontal className="h-4 w-4" />
-                        <span className="sr-only">Open menu</span>
-                      </Button>
-                    </DropdownMenuTrigger>
+                    <DropdownMenuTrigger
+                      render={
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <MoreHorizontal className="h-4 w-4" />
+                          <span className="sr-only">Open menu</span>
+                        </Button>
+                      }
+                    />
                     <DropdownMenuContent align="end" className="w-48">
-                      <DropdownMenuItem asChild>
-                        <MarkedToggleButton
-                          markedForRevision={project.Starmark[0]?.isMarked}
-                          id={project.id}
-                        />
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link
-                          href={`/playground/${project.id}`}
-                          className="flex items-center"
-                        >
-                          <Eye className="h-4 w-4 mr-2" />
-                          Open Project
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem asChild>
-                        <Link
-                          href={`/playground/${project.id}`}
-                          target="_blank"
-                          className="flex items-center"
-                        >
-                          <ExternalLink className="h-4 w-4 mr-2" />
-                          Open in New Tab
-                        </Link>
-                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        nativeButton
+                        render={
+                          <MarkedToggleButton
+                            markedForRevision={
+                              project.Starmark[0]?.isMarked || false
+                            }
+                            id={project.id}
+                          />
+                        }
+                      />
+                      <DropdownMenuItem
+                        render={
+                          <Link
+                            href={`/playground/${project.id}`}
+                            className="flex items-center"
+                          >
+                            <Eye className="h-4 w-4 mr-2" /> Open Project
+                          </Link>
+                        }
+                      />
+                      <DropdownMenuItem
+                        render={
+                          <Link
+                            href={`/playground/${project.id}`}
+                            target="_blank"
+                            className="flex items-center"
+                          >
+                            <ExternalLink className="h-4 w-4 mr-2" /> Open in
+                            New Tab
+                          </Link>
+                        }
+                      />
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         onClick={() => handleEditClick(project)}
