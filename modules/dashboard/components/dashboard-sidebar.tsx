@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState,useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -69,6 +69,11 @@ export function DashboardSidebar({
   const [recentPlaygrounds, setRecentPlaygrounds] = useState(
     initialPlaygroundData,
   );
+
+useEffect(() => {
+  setRecentPlaygrounds(initialPlaygroundData);
+  setStarredPlaygrounds(initialPlaygroundData.filter((p) => p.starred));
+}, [initialPlaygroundData]);
 
   return (
     <Sidebar
