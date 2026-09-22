@@ -1,16 +1,33 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  ResizableHandle,
+  ResizablePanel,
+  ResizablePanelGroup,
+} from "@/components/ui/resizable";
 import { Separator } from "@/components/ui/separator";
 import { SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import PlaygroundEditor from "@/modules/playground/components/playground-editor";
 import { TemplateFileTree } from "@/modules/playground/components/playground-explorer";
 import { useFileExplorer } from "@/modules/playground/hooks/useFileExplorer";
 import { usePlayground } from "@/modules/playground/hooks/usePlayground";
 import { TemplateFile } from "@/modules/playground/lib/path-to-json";
+import WebContainerPreview from "@/modules/webcontainers/components/webcontainer-preview";
+import { useWebContainer } from "@/modules/webcontainers/hooks/useWebcontainer";
 import { Bot, FileText, Save, Settings, X } from "lucide-react";
 import { useParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
@@ -19,7 +36,7 @@ const MainPlaygroundPage = () => {
   const { id } = useParams<{ id: string }>();
   const { playgroundData, templateData, isLoading, error, saveTemplateData } =
     usePlayground(id);
-      const [isPreviewVisible, setIsPreviewVisible] = useState(true);
+  const [isPreviewVisible, setIsPreviewVisible] = useState(true);
   const {
     setTemplateData,
     setActiveFileId,
@@ -29,8 +46,17 @@ const MainPlaygroundPage = () => {
     closeAllFiles,
     openFile,
     openFiles,
-    closeFile
+    closeFile,
   } = useFileExplorer();
+
+  const {
+    serverUrl,
+    isLoading: containerLoading,
+    error: containerError,
+    instance,
+    writeFileSync,
+    // @ts-ignore
+  } = useWebContainer({ templateData });
 
   useEffect(() => {
     setPlaygroundId(id);
@@ -41,8 +67,8 @@ const MainPlaygroundPage = () => {
       setTemplateData(templateData);
     }
   }, [templateData, setTemplateData, openFiles.length]);
-    const activeFile = openFiles.find((file) => file.id === activeFileId);
-    const hasUnsavedChanges = openFiles.some((file) => file.hasUnsavedChanges);
+  const activeFile = openFiles.find((file) => file.id === activeFileId);
+  const hasUnsavedChanges = openFiles.some((file) => file.hasUnsavedChanges);
   const handleFileSelect = (file: TemplateFile) => {
     openFile(file);
   };
@@ -199,6 +225,22 @@ const MainPlaygroundPage = () => {
                         onContentChange={() => {}}
                       />
                     </ResizablePanel>
+                    {isPreviewVisible && (
+                      <>
+                        <ResizableHandle />
+                        <ResizablePanel defaultSize={50}>
+                          <WebContainerPreview
+                            templateData={templateData}
+                            instance={instance}
+                            writeFileSync={writeFileSync}
+                            isLoading={containerLoading}
+                            error={containerError}
+                            serverUrl={serverUrl!}
+                            forceResetup={false}
+                          />
+                        </ResizablePanel>
+                      </>
+                    )}
                   </ResizablePanelGroup>
                 </div>
               </div>
