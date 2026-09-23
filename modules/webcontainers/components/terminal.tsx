@@ -198,7 +198,7 @@ TerminalComponent = forwardRef<TerminalRef, TerminalProps>(({
 
     // Handle special characters
     switch (data) {
-      case '/r': // Enter
+      case '\r': // Enter
         executeCommand(currentLine.current);
         break;
         
