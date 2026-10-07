@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
 
     const prompt = buildPrompt(context, suggestionType);
 
-    const suggestion = await generateSuggestion(prompt);
+    const suggestion = await generateSuggestion(prompt, request.signal);
 
     return NextResponse.json({
       suggestion,
@@ -136,19 +136,20 @@ Instructions:
 Generate suggestion:`;
 }
 
-async function generateSuggestion(prompt: string): Promise<string> {
+async function generateSuggestion(
+  prompt: string,
+  signal: AbortSignal,
+): Promise<string> {
   try {
     const response = await fetch("http://localhost:11434/api/generate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      signal,
       body: JSON.stringify({
-        model: "codellama:latest",
+        model: "codellama:7b",
         prompt,
         stream: false,
-        option: {
-          temperature: 0.7,
-          max_tokens: 300,
-        },
+        options: { temperature: 0.1, num_predict: 40 },
       }),
     });
 
